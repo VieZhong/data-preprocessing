@@ -80,6 +80,11 @@ def tokenize_stories(file_dir, tokenized_dir):
     names = []
     for line in lines:
       result = json.loads(line)
+
+      if "title" not in result or "abstract" not in result or "keyword" not in result:
+        continue
+      if not len(result['title']) or not len(result['abstract']) or not len(result['keyword']):
+        continue
       file_name = ("%s.txt" % hashhex(result['title']))
       split_word_title = ' '.join(jieba.cut(result['title']))
       split_word_abstract = ' '.join(jieba.cut(result['abstract']))

@@ -7,6 +7,7 @@ import collections
 import json
 import tensorflow as tf
 import shutil
+import jieba
 from tensorflow.core.example import example_pb2
 
 
@@ -22,8 +23,8 @@ SENTENCE_END = '</s>'
 # all_val_urls = "url_lists/all_val.txt"
 # all_test_urls = "url_lists/all_test.txt"
 
-tokenized_dir = "/project/data/test_for_generator_keyphrase/article_tokenized"
-finished_files_dir = "/project/data/test_for_generator_keyphrase/finished_files"
+tokenized_dir = "/data/nssd_data/article_tokenized"
+finished_files_dir = "/data/nssd_data/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
 
 # These are the number of .story files we expect there to be in cnn_stories_dir and dm_stories_dir
@@ -80,10 +81,13 @@ def tokenize_stories(file_dir, tokenized_dir):
     for line in lines:
       result = json.loads(line)
       file_name = ("%s.txt" % hashhex(result['title']))
+      split_word_title = ' '.join(jieba.cut(result['title']))
+      split_word_abstract = ' '.join(jieba.cut(result['abstract']))
+      split_word_keyword = ';'.join([' '.join(jieba.cut(w)) for w in result['keyword'].split(';')])
       names.append(file_name)
       with open(("tmp/%s" % file_name), "w") as wf:
-        wf.write("%s %s\n" % (result['title'], result['abstract']))
-        wf.write("@keyphrases\n %s" % result['keyword'])
+        wf.write("%s %s\n" % (split_word_title, split_word_abstract))
+        wf.write("@keyphrases\n %s" % split_word_keyword)
         wf.close()
     stories[j_file.split('.')[0]] = names
     # make IO list file

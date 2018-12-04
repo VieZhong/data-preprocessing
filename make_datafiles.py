@@ -82,8 +82,8 @@ def tokenize_stories(file_dir, tokenized_dir):
     for line in lines:
       try:
         result = json.loads(line)
-      except JSONDecodeError:
-        print ("读取错误")
+      except json.decoder.JSONDecodeError:
+        print ("读取错误，直接跳过本行")
         continue
       if "title" not in result or "abstract" not in result or "keyword" not in result:
         continue

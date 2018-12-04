@@ -1,3 +1,4 @@
+# encoding=utf-8
 import sys
 import os
 import hashlib
@@ -79,8 +80,11 @@ def tokenize_stories(file_dir, tokenized_dir):
     lines = read_text_file(os.path.join(file_dir, j_file))
     names = []
     for line in lines:
-      result = json.loads(line)
-
+      try:
+        result = json.loads(line)
+      except JSONDecodeError:
+        print ("读取错误")
+        continue
       if "title" not in result or "abstract" not in result or "keyword" not in result:
         continue
       if not len(result['title']) or not len(result['abstract']) or not len(result['keyword']):

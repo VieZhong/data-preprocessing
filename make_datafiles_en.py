@@ -22,8 +22,8 @@ SENTENCE_END = '</s>'
 # all_val_urls = "url_lists/all_val.txt"
 # all_test_urls = "url_lists/all_test.txt"
 
-tokenized_dir = "/project/data/test_for_generator_keyphrase/article_tokenized"
-finished_files_dir = "/project/data/test_for_generator_keyphrase/finished_files"
+tokenized_dir = "/data/kp20k/article_tokenized"
+finished_files_dir = "/data/kp20k/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
 TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
 
@@ -173,7 +173,7 @@ def tag_article(text_list):
   while i * 3000 < total:
     with open("text.txt", "w") as f:
       end = min((i + 1) * 3000, total)
-      for j, text in enumerate(text_list[i * 3000: end])
+      for j, text in enumerate(text_list[i * 3000: end]):
         if j < end - 1:
           f.write(text + '\n')
         else:

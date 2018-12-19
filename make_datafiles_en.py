@@ -212,10 +212,7 @@ def write_to_bin(stories, out_file, makevocab=False):
 
   article_list = []
   keyword_list = []
-  for idx, s in enumerate(stories):
-    if idx % 1000 == 0:
-      print("Writing story %i of %i; %.2f percent done" % (idx, num_stories, float(idx)*100.0/float(num_stories)))
-
+  for s in stories:
     # Look in the tokenized story dirs to find the .story file corresponding to this url
     if os.path.isfile(os.path.join(tokenized_dir, s)):
       story_file = os.path.join(tokenized_dir, s)
@@ -245,6 +242,8 @@ def write_to_bin(stories, out_file, makevocab=False):
   with open(out_file, 'wb') as writer:
     tag_list = tag_article(article_list)
     for i in range(len(stories)):
+      if i % 1000 == 0:
+        print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example
       tf_example = example_pb2.Example()
       tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])

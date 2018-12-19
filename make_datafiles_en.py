@@ -189,8 +189,8 @@ def tag_article(text_list):
   for i, text_with_tag in enumerate(text_list_with_tags):
     words_with_tag = text_with_tag.split(" ")
     words = text[i].split(" ")
-
-    assert len(words_with_tag) == len(words), text[i]
+    print(text_with_tag)
+    assert len(words_with_tag) == len(words), "tagged text is: '%s', original text is '%s'" % (text_with_tag, text[i])
     tags = []
     for word_with_tag in words_with_tag:
       split_index = word_with_tag.rfind("_")

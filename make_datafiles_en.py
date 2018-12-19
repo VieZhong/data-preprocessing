@@ -166,24 +166,37 @@ def get_art_abs(story_file):
   return article, keyword
 
 
-def tag_article(text):
-  with open("text.txt", "w") as f:
-    f.write(text)
-    f.close()
-  command = ['java', 'edu.stanford.nlp.tagger.maxent.MaxentTagger', '-model', TAGGER_MODEL_PATH, '-textFile', 'text.txt', '-tokenize', 'false', '-outputFile', 'tmp.txt']
-  subprocess.call(command)
-  text_with_tag = read_text_file("tmp.txt")[0]
-  os.remove("text.txt")
-  os.remove("tmp.txt")
-  words_with_tag = text_with_tag.split(" ")
-  words = text.split(" ")
+def tag_article(text_list):
+  total = len(text_list)
+  i = 0
+  text_list_with_tags = []
+  while i * 3000 < total:
+    with open("text.txt", "w") as f:
+      end = min((i + 1) * 3000, total)
+      for j, text in enumerate(text_list[i * 3000: end])
+        if j < end - 1:
+          f.write(text + '\n')
+        else:
+          f.write(text)
+      f.close()
+    i += 1
+    command = ['java', 'edu.stanford.nlp.tagger.maxent.MaxentTagger', '-model', TAGGER_MODEL_PATH, '-textFile', 'text.txt', '-tokenize', 'false', '-outputFile', 'tmp.txt']
+    subprocess.call(command)
+    text_list_with_tags.extend(read_text_file("tmp.txt"))
+    os.remove("text.txt")
+    os.remove("tmp.txt")
+  tag_list = []
+  for i, text_with_tag in enumerate(text_list_with_tags):
+    words_with_tag = text_with_tag.split(" ")
+    words = text[i].split(" ")
 
-  assert len(words_with_tag) == len(words)
-  tags = []
-  for i, word_with_tag in enumerate(words_with_tag):
-    split_index = word_with_tag.rfind("_")
-    tags.append(word_with_tag[split_index + 1 :])
-  return " ".join(tags)
+    assert len(words_with_tag) == len(words)
+    tags = []
+    for word_with_tag in words_with_tag:
+      split_index = word_with_tag.rfind("_")
+      tags.append(word_with_tag[split_index + 1:])
+    tag_list.append(" ".join(tags))
+  return tag_list
 
 
 def write_to_bin(stories, out_file, makevocab=False):
@@ -197,45 +210,50 @@ def write_to_bin(stories, out_file, makevocab=False):
   if makevocab:
     vocab_counter = collections.Counter()
 
+  article_list = []
+  keyword_list = []
+  for idx, s in enumerate(stories):
+    if idx % 1000 == 0:
+      print("Writing story %i of %i; %.2f percent done" % (idx, num_stories, float(idx)*100.0/float(num_stories)))
+
+    # Look in the tokenized story dirs to find the .story file corresponding to this url
+    if os.path.isfile(os.path.join(tokenized_dir, s)):
+      story_file = os.path.join(tokenized_dir, s)
+    else:
+      print("Error: Couldn't find tokenized story file %s in tokenized directories %s. Was there an error during tokenization?" % (s, tokenized_dir))
+      # Check again if tokenized stories directories contain correct number of files
+      # print "Checking that the tokenized stories directories %s and %s contain correct number of files..." % (cnn_tokenized_stories_dir, dm_tokenized_stories_dir)
+      # check_num_stories(cnn_tokenized_stories_dir, num_expected_cnn_stories)
+      # check_num_stories(dm_tokenized_stories_dir, num_expected_dm_stories)
+      raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
+
+    # Get the strings to write to .bin file
+    article, keyword = get_art_abs(story_file)
+    article_list.append(article)
+    keyword_list.append(keyword)
+
+    # Write the vocab to file, if applicable
+    if makevocab:
+      art_tokens = article.split(' ')
+      abs_tokens = keyword.split(' ')
+      abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
+      tokens = art_tokens + abs_tokens
+      tokens = [t.strip() for t in tokens] # strip
+      tokens = [t for t in tokens if t!=""] # remove empty
+      vocab_counter.update(tokens)
+
   with open(out_file, 'wb') as writer:
-    for idx,s in enumerate(stories):
-      if idx % 1000 == 0:
-        print("Writing story %i of %i; %.2f percent done" % (idx, num_stories, float(idx)*100.0/float(num_stories)))
-
-      # Look in the tokenized story dirs to find the .story file corresponding to this url
-      if os.path.isfile(os.path.join(tokenized_dir, s)):
-        story_file = os.path.join(tokenized_dir, s)
-      else:
-        print("Error: Couldn't find tokenized story file %s in tokenized directories %s. Was there an error during tokenization?" % (s, tokenized_dir))
-        # Check again if tokenized stories directories contain correct number of files
-        # print "Checking that the tokenized stories directories %s and %s contain correct number of files..." % (cnn_tokenized_stories_dir, dm_tokenized_stories_dir)
-        # check_num_stories(cnn_tokenized_stories_dir, num_expected_cnn_stories)
-        # check_num_stories(dm_tokenized_stories_dir, num_expected_dm_stories)
-        raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
-
-      # Get the strings to write to .bin file
-      article, keyword = get_art_abs(story_file)
-      tags = tag_article(article)
-
+    tag_list = tag_article(article_list)
+    for i in range(len(stories))
       # Write to tf.Example
       tf_example = example_pb2.Example()
-      tf_example.features.feature['article'].bytes_list.value.extend([bytes(article, encoding="utf8")])
-      tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tags, encoding="utf8")])
-      tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword, encoding="utf8")])
+      tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
+      tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
+      tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
       tf_example_str = tf_example.SerializeToString()
       str_len = len(tf_example_str)
       writer.write(struct.pack('q', str_len))
       writer.write(struct.pack('%ds' % str_len, tf_example_str))
-
-      # Write the vocab to file, if applicable
-      if makevocab:
-        art_tokens = article.split(' ')
-        abs_tokens = keyword.split(' ')
-        abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
-        tokens = art_tokens + abs_tokens
-        tokens = [t.strip() for t in tokens] # strip
-        tokens = [t for t in tokens if t!=""] # remove empty
-        vocab_counter.update(tokens)
 
   print("Finished writing file %s\n" % out_file)
 

@@ -244,7 +244,7 @@ def write_to_bin(stories, out_file, makevocab=False):
 
   with open(out_file, 'wb') as writer:
     tag_list = tag_article(article_list)
-    for i in range(len(stories))
+    for i in range(len(stories)):
       # Write to tf.Example
       tf_example = example_pb2.Example()
       tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])

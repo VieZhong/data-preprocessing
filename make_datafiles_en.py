@@ -241,7 +241,7 @@ def write_to_bin(stories, out_file, makevocab=False):
 
   with open(out_file, 'wb') as writer:
     tag_list = tag_article(article_list)
-    for i in range(len(stories)):
+    for i in range(num_stories):
       if i % 1000 == 0:
         print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example

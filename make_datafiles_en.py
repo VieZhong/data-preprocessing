@@ -170,10 +170,10 @@ def tag_article(text_list):
   total = len(text_list)
   i = 0
   text_list_with_tags = []
-  while i * 3000 < total:
+  while i * 6000 < total:
     with open("text.txt", "w") as f:
-      end = min((i + 1) * 3000, total)
-      for j, text in enumerate(text_list[i * 3000: end]):
+      end = min((i + 1) * 6000, total)
+      for j, text in enumerate(text_list[i * 6000: end]):
         if j < end - 1:
           f.write(text + '\n')
         else:
@@ -190,7 +190,7 @@ def tag_article(text_list):
     words_with_tag = text_with_tag.split(" ")
     words = text[i].split(" ")
 
-    assert len(words_with_tag) == len(words)
+    assert len(words_with_tag) == len(words), text[i]
     tags = []
     for word_with_tag in words_with_tag:
       split_index = word_with_tag.rfind("_")

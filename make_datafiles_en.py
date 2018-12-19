@@ -188,9 +188,8 @@ def tag_article(text_list):
   tag_list = []
   for i, text_with_tag in enumerate(text_list_with_tags):
     words_with_tag = text_with_tag.split(" ")
-    words = text[i].split(" ")
-    print(text_with_tag)
-    assert len(words_with_tag) == len(words), "tagged text is: '%s', original text is '%s'" % (text_with_tag, text[i])
+    words = text_list[i].split(" ")
+    assert len(words_with_tag) == len(words), "tagged text is: '%s', original text is '%s'" % (text_with_tag, text_list[i])
     tags = []
     for word_with_tag in words_with_tag:
       split_index = word_with_tag.rfind("_")
@@ -293,8 +292,8 @@ if __name__ == '__main__':
 
   # Read the tokenized stories, do a little postprocessing then write to bin files
   write_to_bin(stories["testing"], os.path.join(finished_files_dir, "test.bin"))
-  # write_to_bin(stories["validation"], os.path.join(finished_files_dir, "val.bin"))
-  # write_to_bin(stories["training"], os.path.join(finished_files_dir, "train.bin"), makevocab=True)
+  write_to_bin(stories["validation"], os.path.join(finished_files_dir, "val.bin"))
+  write_to_bin(stories["training"], os.path.join(finished_files_dir, "train.bin"), makevocab=True)
 
   # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in finished_files/chunks
   chunk_all(finished_files_dir)

@@ -22,8 +22,8 @@ SENTENCE_END = '</s>'
 # all_val_urls = "url_lists/all_val.txt"
 # all_test_urls = "url_lists/all_test.txt"
 
-tokenized_dir = "/data/kp20k/article_tokenized"
-finished_files_dir = "/data/kp20k/finished_files"
+tokenized_dir = "/data/krapivin/article_tokenized"
+finished_files_dir = "/data/krapivin/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
 TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
 
@@ -62,6 +62,28 @@ def chunk_all(finished_files_dir):
   print("Saved chunked data in %s" % chunks_dir)
 
 
+def write_file_to_tmp(text_path, keyword_path):
+  text_lines = read_text_file(text_path)
+  keyword_lines = read_text_file(keyword_path)
+  
+  title_index = text_lines.index("--T") + 1
+  abstract_index = text_lines.index("--A") + 1
+  abstract_end_index = text_lines.index("--B")
+
+  title = text_lines[title_index]
+  abstract = ' '.join(text_lines[abstract_index: abstract_end_index])
+  keyword = []
+  for keyword_line in keyword_lines:
+    if(keyword_line):
+      keyword.append(keyword_line)
+  keyword = ';'.join(keyword)
+
+  with open(("tmp/%s" % file_name), "w") as wf:
+    wf.write("%s %s\n" % (title, abstract))
+    wf.write("@keyphrases\n %s" % keyword)
+    wf.close()
+
+
 def tokenize_stories(file_dir, tokenized_dir):
   """Maps a whole directory of .story files to a tokenized version using Stanford CoreNLP Tokenizer"""
   print("Preparing to tokenize %s to %s..." % (file_dir, tokenized_dir))
@@ -69,34 +91,26 @@ def tokenize_stories(file_dir, tokenized_dir):
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
   json_files = os.listdir(file_dir)
-  stories = dict()
+  names = []
 
   for j_file in json_files:
-    lines = read_text_file(os.path.join(file_dir, j_file))
-    names = []
-    for line in lines:
-      result = json.loads(line)
-      file_name = ("%s.txt" % hashhex(result['title']))
-      names.append(file_name)
-      with open(("tmp/%s" % file_name), "w") as wf:
-        wf.write("%s %s\n" % (result['title'], result['abstract']))
-        wf.write("@keyphrases\n %s" % result['keyword'])
-        wf.close()
-    stories[j_file.split('.')[0]] = names
-    # make IO list file
-    print("Making list of files to tokenize...")
-    with open("mapping.txt", "w") as f:
-      for s in names:
-        f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
-    command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
-    print("Tokenizing %i files in %s/%s and saving in %s..." % (len(names), file_dir, j_file, tokenized_dir))
-    subprocess.call(command)
-    print("Stanford CoreNLP Tokenizer has finished.")
-    os.remove("mapping.txt")
+    names.append(j_file)
+    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'))
+
+  # make IO list file 
+  print("Making list of files to tokenize...")
+  with open("mapping.txt", "w") as f:
+    for s in names:
+      f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
+  command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
+  print("Tokenizing %i files in %s/%s and saving in %s..." % (len(names), file_dir, j_file, tokenized_dir))
+  subprocess.call(command)
+  print("Stanford CoreNLP Tokenizer has finished.")
+  os.remove("mapping.txt")
   
   shutil.rmtree("tmp")
 
-  return stories
+  return names
 
   # Check that the tokenized stories directory contains the same number of files as the original directory
   # num_orig = len(os.listdir(stories_dir))
@@ -187,8 +201,8 @@ def tag_article(text_list):
     os.remove("tmp.txt")
   tag_list = []
   for i, text_with_tag in enumerate(text_list_with_tags):
-    words_with_tag = text_with_tag.split(" ")
-    words = text_list[i].split(" ")
+    words_with_tag = text_with_tag.split()
+    words = text_list[i].split()
     assert len(words_with_tag) == len(words), "tagged text is: '%s', original text is '%s'" % (text_with_tag, text_list[i])
     tags = []
     for word_with_tag in words_with_tag:
@@ -241,7 +255,7 @@ def write_to_bin(stories, out_file, makevocab=False):
   with open(out_file, 'wb') as writer:
     tag_list = tag_article(article_list)
     for i in range(num_stories):
-      if i % 1000 == 0:
+      if i % 100 == 0:
         print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example
       tf_example = example_pb2.Example()

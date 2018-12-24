@@ -62,7 +62,7 @@ def chunk_all(finished_files_dir):
   print("Saved chunked data in %s" % chunks_dir)
 
 
-def write_file_to_tmp(text_path, keyword_path):
+def write_file_to_tmp(text_path, keyword_path, file_name):
   text_lines = read_text_file(text_path)
   keyword_lines = read_text_file(keyword_path)
   
@@ -95,7 +95,8 @@ def tokenize_stories(file_dir, tokenized_dir):
 
   for j_file in json_files:
     names.append(j_file)
-    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'))
+    name = j_file.split('.')[0]
+    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', name + '.keyphrases'), name)
 
   # make IO list file 
   print("Making list of files to tokenize...")

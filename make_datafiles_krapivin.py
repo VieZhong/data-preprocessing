@@ -90,7 +90,7 @@ def tokenize_stories(file_dir, tokenized_dir):
 
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
-  json_files = os.listdir(file_dir)
+  json_files = os.listdir(os.path.join(file_dir, 'all_texts'))
   names = []
 
   for j_file in json_files:

@@ -19,7 +19,7 @@ def tokenize_stories(file_dir, tokenized_dir):
     num_stories = len(lines)
     name = j_file.split('.')[0]
 
-    with open(os.path.join(tokenized_dir, 'kp20k_' + name + '.json'), "w") as wf:
+    with open(os.path.join(tokenized_dir, 'kp20k_' + name + '.json'), 'w', encoding='utf-8') as wf:
       for idx, line in enumerate(lines):
         if idx % 1000 == 0:
           print("Writing %s %i of %i; %.2f percent done" % (name, idx, num_stories, float(idx) * 100.0 / float(num_stories)))

@@ -36,7 +36,7 @@ def tokenize_stories(file_dir, tokenized_dir):
         data['title'] = ' '.join(jieba.cut(result['title']))
         data['abstract'] = ' '.join(jieba.cut(result['abstract']))
         data['keyword'] = ';'.join([' '.join(jieba.cut(w)) for w in result['keyword'].split(';')])
-        wf.write("%s\n" % json.dumps(data))
+        wf.write("%s\n" % json.dumps(data, ensure_ascii=False))
       wf.close()
 
 

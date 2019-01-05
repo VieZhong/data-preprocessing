@@ -226,6 +226,7 @@ def write_to_bin(stories, out_file, makevocab=False):
   if makevocab:
     vocab_counter = collections.Counter()
 
+  title_list = []
   article_list = []
   keyword_list = []
   for s in stories:
@@ -280,7 +281,8 @@ def write_to_bin(stories, out_file, makevocab=False):
     print("Writing vocab file...")
     with open(os.path.join(finished_files_dir, "vocab"), 'w', encoding="utf-8") as writer:
       for word, count in vocab_counter.most_common(VOCAB_SIZE):
-        writer.write((word + ' ' + str(count) + '\n'))
+        if not word.isdigit():
+          writer.write((word + ' ' + str(count) + '\n'))
     print("Finished writing vocab file")
 
 

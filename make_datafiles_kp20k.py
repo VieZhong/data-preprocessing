@@ -22,8 +22,8 @@ SENTENCE_END = '</s>'
 # all_val_urls = "url_lists/all_val.txt"
 # all_test_urls = "url_lists/all_test.txt"
 
-tokenized_dir = "/data/kp20k/article_tokenized"
-finished_files_dir = "/data/kp20k/finished_files"
+tokenized_dir = "/data/kp20k/with_title/article_tokenized"
+finished_files_dir = "/data/kp20k/with_title/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
 TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
 
@@ -79,7 +79,9 @@ def tokenize_stories(file_dir, tokenized_dir):
       file_name = ("%s.txt" % hashhex(result['title']))
       names.append(file_name)
       with open(("tmp/%s" % file_name), "w") as wf:
-        wf.write("%s %s\n" % (result['title'], result['abstract']))
+        # wf.write("%s %s\n" % (result['title'], result['abstract']))
+        wf.write("@title\n %s\n" % result['title'])
+        wf.write("@abstract\n %s\n" % result['abstract'])
         wf.write("@keyphrases\n %s" % result['keyword'])
         wf.close()
     stories[j_file.split('.')[0]] = names
@@ -127,7 +129,9 @@ def get_url_hashes(url_list):
 
 def fix_missing_period(line):
   """Adds a period to a line that is missing a period"""
-  if "@highlight" in line: return line
+  if "@title" in line: return line
+  if "@abstract" in line: return line
+  if "@keyphrases" in line: return line
   if line=="": return line
   if line[-1] in END_TOKENS: return line
   # print line[-1]
@@ -145,25 +149,38 @@ def get_art_abs(story_file):
 
   # Separate out article and abstract sentences
   article_lines = []
-  highlights = None
-  next_is_highlight = False
+  keyphrases = None
+  next_is = {
+    "title": False,
+    "abstract": False,
+    "keyphrase": False
+  }
   for idx,line in enumerate(lines):
     if line == "":
       continue # empty line
     elif line.startswith("@keyphrases"):
-      next_is_highlight = True
-    elif next_is_highlight:
-      highlights = line.split(';')
-    else:
+      next_is["keyphrase"] = True
+    elif next_is["keyphrase"]:
+      keyphrases = line.split(';')
+      next_is["keyphrase"] = False
+    elif line.startswith("@title"):
+      next_is["title"] = True
+    elif next_is["title"]:
+      title = line
+      next_is["title"] = False
+    elif line.startswith("@abstract"):
+      next_is["abstract"] = True
+    elif next_is["abstract"]:
+      next_is["abstract"] = False
       article_lines.append(fix_missing_period(line))
 
   # Make article into a single string
   article = ' '.join(article_lines)
 
   # Make abstract into a signle string, putting <s> and </s> tags around the sentences
-  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
+  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in keyphrases])
 
-  return article, keyword
+  return title, article, keyword
 
 
 def tag_article(text_list):
@@ -224,29 +241,32 @@ def write_to_bin(stories, out_file, makevocab=False):
       raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
 
     # Get the strings to write to .bin file
-    article, keyword = get_art_abs(story_file)
+    title, article, keyword = get_art_abs(story_file)
+    title_list.append(title)
     article_list.append(article)
     keyword_list.append(keyword)
 
     # Write the vocab to file, if applicable
     if makevocab:
+      tit_tokens = title.split(' ')
       art_tokens = article.split(' ')
       abs_tokens = keyword.split(' ')
       abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
-      tokens = art_tokens + abs_tokens
+      tokens = art_tokens + abs_tokens + tit_tokens
       tokens = [t.strip() for t in tokens] # strip
       tokens = [t for t in tokens if t!=""] # remove empty
       vocab_counter.update(tokens)
 
   with open(out_file, 'wb') as writer:
-    tag_list = tag_article(article_list)
+    # tag_list = tag_article(article_list)
     for i in range(num_stories):
       if i % 1000 == 0:
         print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example
       tf_example = example_pb2.Example()
+      tf_example.features.feature['title'].bytes_list.value.extend([bytes(title_list[i], encoding="utf8")])
       tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
-      tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
+      # tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
       tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
       tf_example_str = tf_example.SerializeToString()
       str_len = len(tf_example_str)
@@ -272,7 +292,7 @@ def check_num_stories(stories_dir, num_expected):
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print("USAGE: python make_datafiles.py <cnn_stories_dir> <dailymail_stories_dir>")
+    print("USAGE: python make_datafiles.py <jsons_dir>")
     sys.exit()
   jsons_dir = sys.argv[1]
   # dm_stories_dir = sys.argv[2]

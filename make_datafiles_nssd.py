@@ -24,8 +24,8 @@ SENTENCE_END = '</s>'
 # all_val_urls = "url_lists/all_val.txt"
 # all_test_urls = "url_lists/all_test.txt"
 
-tokenized_dir = "/data/nssd_data/article_tokenized"
-finished_files_dir = "/data/nssd_data/finished_files"
+tokenized_dir = "/data/nssd_data/with_title/article_tokenized"
+finished_files_dir = "/data/nssd_data/with_title/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
 
 # These are the number of .story files we expect there to be in cnn_stories_dir and dm_stories_dir
@@ -95,7 +95,8 @@ def tokenize_stories(file_dir, tokenized_dir):
       split_word_keyword = ';'.join([' '.join(jieba.cut(w)) for w in result['keyword'].split(';')])
       names.append(file_name)
       with open(("tmp/%s" % file_name), "w") as wf:
-        wf.write("%s %s\n" % (split_word_title, split_word_abstract))
+        wf.write("@title\n %s\n" % split_word_title)
+        wf.write("@abstract\n %s\n" % split_word_abstract)
         wf.write("@keyphrases\n %s" % split_word_keyword)
         wf.close()
     stories[j_file.split('.')[0]] = names
@@ -143,11 +144,13 @@ def get_url_hashes(url_list):
 
 def fix_missing_period(line):
   """Adds a period to a line that is missing a period"""
-  if "@highlight" in line: return line
+  if "@title" in line: return line
+  if "@abstract" in line: return line
+  if "@keyphrases" in line: return line
   if line=="": return line
   if line[-1] in END_TOKENS: return line
   # print line[-1]
-  return line + " ."
+  return line + " 。"
 
 
 def get_art_abs(story_file):
@@ -161,25 +164,38 @@ def get_art_abs(story_file):
 
   # Separate out article and abstract sentences
   article_lines = []
-  highlights = None
-  next_is_highlight = False
+  keyphrases = None
+  next_is = {
+    "title": False,
+    "abstract": False,
+    "keyphrase": False
+  }
   for idx,line in enumerate(lines):
     if line == "":
       continue # empty line
     elif line.startswith("@keyphrases"):
-      next_is_highlight = True
-    elif next_is_highlight:
-      highlights = line.split(';')
-    else:
+      next_is["keyphrase"] = True
+    elif next_is["keyphrase"]:
+      keyphrases = line.split(';')
+      next_is["keyphrase"] = False
+    elif line.startswith("@title"):
+      next_is["title"] = True
+    elif next_is["title"]:
+      title = line
+      next_is["title"] = False
+    elif line.startswith("@abstract"):
+      next_is["abstract"] = True
+    elif next_is["abstract"]:
+      next_is["abstract"] = False
       article_lines.append(fix_missing_period(line))
 
   # Make article into a single string
   article = ' '.join(article_lines)
 
   # Make abstract into a signle string, putting <s> and </s> tags around the sentences
-  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
+  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in keyphrases])
 
-  return article, keyword
+  return title, article, keyword
 
 
 def write_to_bin(stories, out_file, makevocab=False):
@@ -210,10 +226,11 @@ def write_to_bin(stories, out_file, makevocab=False):
         raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
 
       # Get the strings to write to .bin file
-      article, keyword = get_art_abs(story_file)
+      title, article, keyword = get_art_abs(story_file)
 
       # Write to tf.Example
       tf_example = example_pb2.Example()
+      tf_example.features.feature['title'].bytes_list.value.extend([bytes(title, encoding="utf8")])
       tf_example.features.feature['article'].bytes_list.value.extend([bytes(article, encoding="utf8")])
       tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword, encoding="utf8")])
       tf_example_str = tf_example.SerializeToString()
@@ -223,10 +240,11 @@ def write_to_bin(stories, out_file, makevocab=False):
 
       # Write the vocab to file, if applicable
       if makevocab:
+        tit_tokens = title.split(' ')
         art_tokens = article.split(' ')
         abs_tokens = keyword.split(' ')
         abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
-        tokens = art_tokens + abs_tokens
+        tokens = art_tokens + abs_tokens + tit_tokens
         tokens = [t.strip() for t in tokens] # strip
         tokens = [t for t in tokens if t!=""] # remove empty
         vocab_counter.update(tokens)
@@ -238,7 +256,8 @@ def write_to_bin(stories, out_file, makevocab=False):
     print("Writing vocab file...")
     with open(os.path.join(finished_files_dir, "vocab"), 'w', encoding="utf-8") as writer:
       for word, count in vocab_counter.most_common(VOCAB_SIZE):
-        writer.write((word + ' ' + str(count) + '\n'))
+        if not word.isdigit():
+          writer.write((word + ' ' + str(count) + '\n'))
     print("Finished writing vocab file")
 
 
@@ -250,14 +269,9 @@ def check_num_stories(stories_dir, num_expected):
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print("USAGE: python make_datafiles.py <cnn_stories_dir> <dailymail_stories_dir>")
+    print("USAGE: python make_datafiles.py <jsons_dir>")
     sys.exit()
   jsons_dir = sys.argv[1]
-  # dm_stories_dir = sys.argv[2]
-
-  # Check the stories directories contain the correct number of .story files
-  # check_num_stories(cnn_stories_dir, num_expected_cnn_stories)
-  # check_num_stories(dm_stories_dir, num_expected_dm_stories)
 
   # Create some new directories
   if not os.path.exists(tokenized_dir): os.makedirs(tokenized_dir)

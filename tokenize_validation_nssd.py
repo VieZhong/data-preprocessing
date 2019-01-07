@@ -57,7 +57,7 @@ def tokenize_stories(file_path, tokenized_dir):
       for s in names:
         f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
     command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
-    print("Tokenizing %i files in %s/%s and saving in %s..." % (len(names), file_dir, j_file, tokenized_dir))
+    print("Tokenizing %i files in %s and saving in %s..." % (len(names), file_path, tokenized_dir))
     subprocess.call(command)
     print("Stanford CoreNLP Tokenizer has finished.")
     os.remove("mapping.txt")

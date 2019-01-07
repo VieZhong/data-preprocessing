@@ -18,87 +18,43 @@ END_TOKENS = ['.', '!', '?', '...', "'", "`", '"', dm_single_close_quote, dm_dou
 SENTENCE_START = '<s>'
 SENTENCE_END = '</s>'
 
-# all_train_urls = "url_lists/all_train.txt"
-# all_val_urls = "url_lists/all_val.txt"
-# all_test_urls = "url_lists/all_test.txt"
-
-tokenized_dir = "/data/kp20k/with_title/article_tokenized"
-finished_files_dir = "/data/kp20k/with_title/finished_files"
-chunks_dir = os.path.join(finished_files_dir, "chunked")
-TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
-
-VOCAB_SIZE = 250000
-CHUNK_SIZE = 1000 # num examples per chunk, for the chunked data
+tokenized_dir = "/data/kp20k/validation_json_token/tokenized"
+finished_files_dir = "/data/kp20k/validation_json_token/"
 
 
-def chunk_file(set_name, finished_files_dir):
-  in_file = '%s/%s.bin' % (finished_files_dir, set_name)
-  reader = open(in_file, "rb")
-  chunk = 0
-  finished = False
-  while not finished:
-    chunk_fname = os.path.join(chunks_dir, '%s_%05d.bin' % (set_name, chunk)) # new chunk
-    with open(chunk_fname, 'wb') as writer:
-      for _ in range(CHUNK_SIZE):
-        len_bytes = reader.read(8)
-        if not len_bytes:
-          finished = True
-          break
-        str_len = struct.unpack('q', len_bytes)[0]
-        example_str = struct.unpack('%ds' % str_len, reader.read(str_len))[0]
-        writer.write(struct.pack('q', str_len))
-        writer.write(struct.pack('%ds' % str_len, example_str))
-      chunk += 1
-
-
-def chunk_all(finished_files_dir):
-  # Make a dir to hold the chunks
-  if not os.path.isdir(chunks_dir):
-    os.mkdir(chunks_dir)
-  # Chunk the data
-  for set_name in ['train', 'val', 'test']:
-    print("Splitting %s data into chunks..." % set_name)
-    chunk_file(set_name, finished_files_dir)
-  print("Saved chunked data in %s" % chunks_dir)
-
-
-def tokenize_stories(file_dir, tokenized_dir):
+def tokenize_stories(file_path, tokenized_dir):
   """Maps a whole directory of .story files to a tokenized version using Stanford CoreNLP Tokenizer"""
-  print("Preparing to tokenize %s to %s..." % (file_dir, tokenized_dir))
+  print("Preparing to tokenize %s to %s..." % (file_path, tokenized_dir))
 
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
-  json_files = os.listdir(file_dir)
-  stories = dict()
-
-  for j_file in json_files:
-    lines = read_text_file(os.path.join(file_dir, j_file))
-    names = []
-    for line in lines:
-      result = json.loads(line)
-      file_name = ("%s.txt" % hashhex(result['title']))
-      names.append(file_name)
-      with open(("tmp/%s" % file_name), "w") as wf:
-        # wf.write("%s %s\n" % (result['title'], result['abstract']))
-        wf.write("@title\n %s\n" % result['title'])
-        wf.write("@abstract\n %s\n" % result['abstract'])
-        wf.write("@keyphrases\n %s" % result['keyword'])
-        wf.close()
-    stories[j_file.split('.')[0]] = names
-    # make IO list file
-    print("Making list of files to tokenize...")
-    with open("mapping.txt", "w") as f:
-      for s in names:
-        f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
-    command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
-    print("Tokenizing %i files in %s/%s and saving in %s..." % (len(names), file_dir, j_file, tokenized_dir))
-    subprocess.call(command)
-    print("Stanford CoreNLP Tokenizer has finished.")
-    os.remove("mapping.txt")
+  lines = read_text_file(file_path)
+  names = []
+  for line in lines:
+    result = json.loads(line)
+    file_name = ("%s.txt" % hashhex(result['title']))
+    names.append(file_name)
+    with open(("tmp/%s" % file_name), "w") as wf:
+      # wf.write("%s %s\n" % (result['title'], result['abstract']))
+      wf.write("@title\n %s\n" % result['title'])
+      wf.write("@abstract\n %s\n" % result['abstract'])
+      wf.write("@keyphrases\n %s" % result['keyword'])
+      wf.close()
+  
+  # make IO list file
+  print("Making list of files to tokenize...")
+  with open("mapping.txt", "w") as f:
+    for s in names:
+      f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
+  command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
+  print("Tokenizing %i files in %s/%s and saving in %s..." % (len(names), file_dir, j_file, tokenized_dir))
+  subprocess.call(command)
+  print("Stanford CoreNLP Tokenizer has finished.")
+  os.remove("mapping.txt")
   
   shutil.rmtree("tmp")
 
-  return stories
+  return names
 
   # Check that the tokenized stories directory contains the same number of files as the original directory
   # num_orig = len(os.listdir(stories_dir))

@@ -51,16 +51,16 @@ def tokenize_stories(file_path, tokenized_dir):
       wf.write("@keyphrases\n %s" % split_word_keyword)
       wf.close()
 
-    # make IO list file
-    print("Making list of files to tokenize...")
-    with open("mapping.txt", "w") as f:
-      for s in names:
-        f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
-    command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
-    print("Tokenizing %i files in %s and saving in %s..." % (len(names), file_path, tokenized_dir))
-    subprocess.call(command)
-    print("Stanford CoreNLP Tokenizer has finished.")
-    os.remove("mapping.txt")
+  # make IO list file
+  print("Making list of files to tokenize...")
+  with open("mapping.txt", "w") as f:
+    for s in names:
+      f.write("%s \t %s\n" % (os.path.join("tmp", s), os.path.join(tokenized_dir, s)))
+  command = ['java', 'edu.stanford.nlp.process.PTBTokenizer', '-lowerCase', '-ioFileList', '-preserveLines', 'mapping.txt']
+  print("Tokenizing %i files in %s and saving in %s..." % (len(names), file_path, tokenized_dir))
+  subprocess.call(command)
+  print("Stanford CoreNLP Tokenizer has finished.")
+  os.remove("mapping.txt")
   
   shutil.rmtree("tmp")
 

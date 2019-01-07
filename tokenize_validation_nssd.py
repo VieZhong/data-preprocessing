@@ -180,9 +180,9 @@ def write_to_json(stories, out_file):
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print("USAGE: python make_datafiles.py <jsons_dir>")
+    print("USAGE: python make_datafiles.py <json_path>")
     sys.exit()
-  jsons_dir = sys.argv[1]
+  json_path = sys.argv[1]
 
   # Create some new directories
   if not os.path.exists(tokenized_dir): os.makedirs(tokenized_dir)

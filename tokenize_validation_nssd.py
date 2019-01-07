@@ -11,7 +11,6 @@ import shutil
 import jieba
 from tensorflow.core.example import example_pb2
 
-
 dm_single_close_quote = u'\u2019' # unicode
 dm_double_close_quote = u'\u201d'
 END_TOKENS = ['.', '!', '?', '...', "'", "`", '"', dm_single_close_quote, dm_double_close_quote, ")"] # acceptable ways to end a sentence
@@ -173,7 +172,7 @@ def write_to_json(stories, out_file):
       # Get the strings to write to .bin file
       title, article, keyword = get_art_abs(story_file)
       # Write
-      writer.write("%s\n" % json.dumps({"title:" title, "abstract": article, "keyword": keyword}))
+      writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
 
 
   print("Finished writing file %s\n" % out_file)

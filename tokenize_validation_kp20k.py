@@ -143,7 +143,7 @@ def write_to_json(stories, out_file):
   """Reads the tokenized .story files corresponding to the urls listed in the url_file and writes them to a out_file."""
   num_stories = len(stories)
 
-  with open(out_file, 'wb') as writer:
+  with open(out_file, 'w', encoding="utf-8") as writer:
     for s in stories:
       # Look in the tokenized story dirs to find the .story file corresponding to this url
       if os.path.isfile(os.path.join(tokenized_dir, s)):

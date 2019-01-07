@@ -150,9 +150,6 @@ def write_to_json(stories, out_file):
   # story_fnames = [s+".txt" for s in stories]
   num_stories = len(stories)
 
-  if makevocab:
-    vocab_counter = collections.Counter()
-
   with open(out_file, 'w', encoding="utf-8") as writer:
     for idx,s in enumerate(stories):
       if idx % 1000 == 0:
@@ -173,7 +170,6 @@ def write_to_json(stories, out_file):
       title, article, keyword = get_art_abs(story_file)
       # Write
       writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
-
 
   print("Finished writing file %s\n" % out_file)
 

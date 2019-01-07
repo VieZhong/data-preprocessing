@@ -171,7 +171,7 @@ def tag_article(text_list):
   return tag_list
 
 
-def write_to_bin(stories, out_file, makevocab=False):
+def write_to_json(stories, out_file, makevocab=False):
   """Reads the tokenized .story files corresponding to the urls listed in the url_file and writes them to a out_file."""
   # print "Making bin file for URLs listed in %s..." % url_file
   # url_list = read_text_file(url_file)

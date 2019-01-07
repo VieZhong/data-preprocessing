@@ -24,11 +24,11 @@ finished_files_dir = "/data/nssd_data/validation_json_token/"
 
 def tokenize_stories(file_path, tokenized_dir):
   """Maps a whole directory of .story files to a tokenized version using Stanford CoreNLP Tokenizer"""
-  print("Preparing to tokenize %s to %s..." % (file_dir, tokenized_dir))
+  print("Preparing to tokenize %s to %s..." % (file_path, tokenized_dir))
 
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
-  lines = read_text_file(os.path.join(file_dir, file_path))
+  lines = read_text_file(file_path)
   names = []
   for line in lines:
     try:

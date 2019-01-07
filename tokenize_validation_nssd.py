@@ -169,7 +169,7 @@ def write_to_json(stories, out_file):
       # Get the strings to write to .bin file
       title, article, keyword = get_art_abs(story_file)
       # Write
-      writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
+      writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}, ensure_ascii=False))
 
   print("Finished writing file %s\n" % out_file)
 

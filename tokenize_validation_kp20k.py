@@ -139,107 +139,26 @@ def get_art_abs(story_file):
   return title, article, keyword
 
 
-def tag_article(text_list):
-  total = len(text_list)
-  i = 0
-  text_list_with_tags = []
-  while i * 6000 < total:
-    with open("text.txt", "w") as f:
-      end = min((i + 1) * 6000, total)
-      for j, text in enumerate(text_list[i * 6000: end]):
-        if j < end - 1:
-          f.write(text + '\n')
-        else:
-          f.write(text)
-      f.close()
-    i += 1
-    command = ['java', 'edu.stanford.nlp.tagger.maxent.MaxentTagger', '-model', TAGGER_MODEL_PATH, '-textFile', 'text.txt', '-tokenize', 'false', '-outputFile', 'tmp.txt']
-    subprocess.call(command)
-    text_list_with_tags.extend(read_text_file("tmp.txt"))
-    os.remove("text.txt")
-    os.remove("tmp.txt")
-  tag_list = []
-  for i, text_with_tag in enumerate(text_list_with_tags):
-    words_with_tag = text_with_tag.split()
-    words = text_list[i].split()
-    assert len(words_with_tag) == len(words), "tagged text is: '%s', original text is '%s'" % (text_with_tag, text_list[i])
-    tags = []
-    for word_with_tag in words_with_tag:
-      split_index = word_with_tag.rfind("_")
-      tags.append(word_with_tag[split_index + 1:])
-    tag_list.append(" ".join(tags))
-  return tag_list
-
-
-def write_to_json(stories, out_file, makevocab=False):
+def write_to_json(stories, out_file):
   """Reads the tokenized .story files corresponding to the urls listed in the url_file and writes them to a out_file."""
-  # print "Making bin file for URLs listed in %s..." % url_file
-  # url_list = read_text_file(url_file)
-  # url_hashes = get_url_hashes(url_list)
-  # story_fnames = [s+".txt" for s in stories]
   num_stories = len(stories)
 
-  if makevocab:
-    vocab_counter = collections.Counter()
-
-  title_list = []
-  article_list = []
-  keyword_list = []
-  for s in stories:
-    # Look in the tokenized story dirs to find the .story file corresponding to this url
-    if os.path.isfile(os.path.join(tokenized_dir, s)):
-      story_file = os.path.join(tokenized_dir, s)
-    else:
-      print("Error: Couldn't find tokenized story file %s in tokenized directories %s. Was there an error during tokenization?" % (s, tokenized_dir))
-      # Check again if tokenized stories directories contain correct number of files
-      # print "Checking that the tokenized stories directories %s and %s contain correct number of files..." % (cnn_tokenized_stories_dir, dm_tokenized_stories_dir)
-      # check_num_stories(cnn_tokenized_stories_dir, num_expected_cnn_stories)
-      # check_num_stories(dm_tokenized_stories_dir, num_expected_dm_stories)
-      raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
-
-    # Get the strings to write to .bin file
-    title, article, keyword = get_art_abs(story_file)
-    title_list.append(title)
-    article_list.append(article)
-    keyword_list.append(keyword)
-
-    # Write the vocab to file, if applicable
-    if makevocab:
-      tit_tokens = title.split(' ')
-      art_tokens = article.split(' ')
-      abs_tokens = keyword.split(' ')
-      abs_tokens = [t for t in abs_tokens if t not in [SENTENCE_START, SENTENCE_END]] # remove these tags from vocab
-      tokens = art_tokens + abs_tokens + tit_tokens
-      tokens = [t.strip() for t in tokens] # strip
-      tokens = [t for t in tokens if t!=""] # remove empty
-      vocab_counter.update(tokens)
-
   with open(out_file, 'wb') as writer:
-    # tag_list = tag_article(article_list)
-    for i in range(num_stories):
-      if i % 1000 == 0:
-        print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
-      # Write to tf.Example
-      tf_example = example_pb2.Example()
-      tf_example.features.feature['title'].bytes_list.value.extend([bytes(title_list[i], encoding="utf8")])
-      tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
-      # tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
-      tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
-      tf_example_str = tf_example.SerializeToString()
-      str_len = len(tf_example_str)
-      writer.write(struct.pack('q', str_len))
-      writer.write(struct.pack('%ds' % str_len, tf_example_str))
+    for s in stories:
+      # Look in the tokenized story dirs to find the .story file corresponding to this url
+      if os.path.isfile(os.path.join(tokenized_dir, s)):
+        story_file = os.path.join(tokenized_dir, s)
+      else:
+        print("Error: Couldn't find tokenized story file %s in tokenized directories %s. Was there an error during tokenization?" % (s, tokenized_dir))
+
+        raise Exception("Tokenized stories directories %s contain correct number of files but story file %s found in neither." % (tokenized_dir, s))
+
+      # Get the strings to write to .bin file
+      title, article, keyword = get_art_abs(story_file)
+      # Write
+      writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
 
   print("Finished writing file %s\n" % out_file)
-
-  # write vocab to file
-  if makevocab:
-    print("Writing vocab file...")
-    with open(os.path.join(finished_files_dir, "vocab"), 'w', encoding="utf-8") as writer:
-      for word, count in vocab_counter.most_common(VOCAB_SIZE):
-        if not word.isdigit():
-          writer.write((word + ' ' + str(count) + '\n'))
-    print("Finished writing vocab file")
 
 
 def check_num_stories(stories_dir, num_expected):

@@ -30,6 +30,6 @@ if __name__ == '__main__':
   test_lines = lines[20000:21200]
   with open('test.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',')
-    for line in train_lines:
+    for line in test_lines:
       result = json.loads(line)
       spamwriter.writerow(["chy", result["title"], result["abstract"]])

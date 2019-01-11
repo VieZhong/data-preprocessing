@@ -23,13 +23,13 @@ if __name__ == '__main__':
   train_lines = lines[:20000]
   with open('train.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',')
-      for line in train_lines:
-        result = json.loads(line)
-        spamwriter.writerow(["chy", result["title"], result["abstract"]])
+    for line in train_lines:
+      result = json.loads(line)
+      spamwriter.writerow(["chy", result["title"], result["abstract"]])
 
   test_lines = lines[20000:21200]
   with open('test.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',')
-      for line in train_lines:
-        result = json.loads(line)
-        spamwriter.writerow(["chy", result["title"], result["abstract"]])
+    for line in train_lines:
+      result = json.loads(line)
+      spamwriter.writerow(["chy", result["title"], result["abstract"]])

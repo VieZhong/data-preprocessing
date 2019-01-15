@@ -95,7 +95,7 @@ def score_eval(ref_dir, dec_dir, validation_data):
         val_reference[name] = {
           "ref": ref_words,
           "present_ref": present_ref_words,
-          "absent_ref_words": absent_ref_words
+          "absent_ref": absent_ref_words
         }
 
         if len(present_ref_words) > 0:

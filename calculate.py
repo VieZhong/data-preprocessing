@@ -207,8 +207,8 @@ if __name__ == '__main__':
     pickle.dump(validation_data, open(validation_json_pickle_path, 'wb'))
 
   f1_score_5, f1_score_10, absent_recall_10, absent_recall_50 = score_eval("/data/%s/val_reference" % dataset, "%s/%s/%s/decoded" % (path, experiment_name, model_name), validation_data)
-  f1_score_log(f1_score_5, "/tmp/f1_score_test", 5)
-  f1_score_log(f1_score_10, "/tmp/f1_score_test", 10)
-  absent_recall_log(absent_recall_10, "/tmp/f1_score_test", 10)
-  absent_recall_log(absent_recall_50, "/tmp/f1_score_test", 50)
+  f1_score_log(f1_score_5, "%s/%s/%s" % (path, experiment_name, model_name), 5)
+  f1_score_log(f1_score_10, "%s/%s/%s" % (path, experiment_name, model_name), 10)
+  absent_recall_log(absent_recall_10, "%s/%s/%s" % (path, experiment_name, model_name), 10)
+  absent_recall_log(absent_recall_50, "%s/%s/%s" % (path, experiment_name, model_name), 50)
 

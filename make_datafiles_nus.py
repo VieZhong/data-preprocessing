@@ -253,9 +253,8 @@ def write_to_bin(stories, out_file, makevocab=False):
 
     # Get the strings to write to .bin file
     article, keyword = get_art_abs(story_file)
-    if keyword is not None:
-      article_list.append(article)
-      keyword_list.append(keyword)
+    article_list.append(article)
+    keyword_list.append(keyword)
 
     # Write the vocab to file, if applicable
     if makevocab:
@@ -273,14 +272,15 @@ def write_to_bin(stories, out_file, makevocab=False):
       if i % 100 == 0:
         print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example
-      tf_example = example_pb2.Example()
-      tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
-      # tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
-      tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
-      tf_example_str = tf_example.SerializeToString()
-      str_len = len(tf_example_str)
-      writer.write(struct.pack('q', str_len))
-      writer.write(struct.pack('%ds' % str_len, tf_example_str))
+      if keyword_list[i] is not None:
+        tf_example = example_pb2.Example()
+        tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
+        # tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
+        tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
+        tf_example_str = tf_example.SerializeToString()
+        str_len = len(tf_example_str)
+        writer.write(struct.pack('q', str_len))
+        writer.write(struct.pack('%ds' % str_len, tf_example_str))
 
   print("Finished writing file %s\n" % out_file)
 

@@ -67,11 +67,13 @@ def write_file_to_tmp(text_path, keyword_path, file_name):
   keyword_lines = read_text_file(keyword_path)
   
   title_index = 0
-  abstract_index = text_lines.index("ABSTRACT") + 1
+  try:
+    abstract_index = text_lines.index("ABSTRACT") + 1
+  except ValueError:
+    abstract_index = text_lines.index("Abstract") + 1
   abstract_end_index = len(text_lines)
   for i, line in enumerate(text_lines):
-    print(i)
-    if "Categories" in line or "CR Categories" in line or "INTRODUCTION" in line:
+    if "Categories" in line or "CR Categories" in line or "INTRODUCTION" in line or "Introduction" in line:
       abstract_end_index = i
       break
 

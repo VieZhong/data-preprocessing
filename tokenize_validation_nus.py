@@ -154,7 +154,10 @@ def get_art_abs(story_file):
   article = ' '.join(article_lines)
 
   # Make abstract into a signle string, putting <s> and </s> tags around the sentences
-  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in keyphrases])
+  if keyphrases is not None:
+    keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in keyphrases])
+  else:
+    keyword = None
 
   return title, article, keyword
 
@@ -176,7 +179,8 @@ def write_to_json(stories, out_file):
       # Get the strings to write to .bin file
       title, article, keyword = get_art_abs(story_file)
       # Write
-      writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
+      if keyword is not None:
+        writer.write("%s\n" % json.dumps({"title": title, "abstract": article, "keyword": keyword}))
 
   print("Finished writing file %s\n" % out_file)
 

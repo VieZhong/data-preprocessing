@@ -186,7 +186,10 @@ def get_art_abs(story_file):
   article = ' '.join(article_lines)
 
   # Make abstract into a signle string, putting <s> and </s> tags around the sentences
-  keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
+  if highlights is not None:
+    keyword = ' '.join(["%s %s %s" % (SENTENCE_START, sent, SENTENCE_END) for sent in highlights])
+  else:
+    keyword = None
 
   return article, keyword
 
@@ -250,8 +253,9 @@ def write_to_bin(stories, out_file, makevocab=False):
 
     # Get the strings to write to .bin file
     article, keyword = get_art_abs(story_file)
-    article_list.append(article)
-    keyword_list.append(keyword)
+    if keyword is not None:
+      article_list.append(article)
+      keyword_list.append(keyword)
 
     # Write the vocab to file, if applicable
     if makevocab:

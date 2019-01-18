@@ -94,9 +94,11 @@ def tokenize_stories(file_dir, tokenized_dir):
   names = []
 
   for j_file in json_files:
-    names.append(j_file)
-    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_test', 'test_' + j_file.split('.')[0] + '.keyphrases'), j_file)
-
+    key_file = os.path.join(file_dir, 'gold_standard_test', 'test_' + j_file.split('.')[0] + '.keyphrases')
+    if os.path.exists(key_file):
+      names.append(j_file)
+      write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), key_file, j_file)
+      
   # make IO list file 
   print("Making list of files to tokenize...")
   with open("mapping.txt", "w") as f:

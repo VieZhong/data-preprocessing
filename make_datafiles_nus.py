@@ -70,6 +70,7 @@ def write_file_to_tmp(text_path, keyword_path, file_name):
   abstract_index = text_lines.index("ABSTRACT") + 1
   abstract_end_index = len(text_lines)
   for i, line in enumerate(text_lines):
+    print(i)
     if "Categories" in line or "CR Categories" in line or "INTRODUCTION" in line:
       abstract_end_index = i
       break
@@ -94,12 +95,12 @@ def tokenize_stories(file_dir, tokenized_dir):
 
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
-  json_files = os.listdir(os.path.join(file_dir, 'all_texts'))
+  json_files = os.listdir(os.path.join(file_dir, 'abstract_introduction_texts'))
   names = []
 
   for j_file in json_files:
     names.append(j_file)
-    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'), j_file)
+    write_file_to_tmp(os.path.join(file_dir, 'abstract_introduction_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'), j_file)
 
   # make IO list file 
   print("Making list of files to tokenize...")

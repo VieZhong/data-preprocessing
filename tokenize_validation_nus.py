@@ -55,12 +55,12 @@ def tokenize_stories(file_dir, tokenized_dir):
 
   if not os.path.exists("tmp"): os.makedirs("tmp")
 
-  json_files = os.listdir(os.path.join(file_dir, 'all_texts'))
+  json_files = os.listdir(os.path.join(file_dir, 'abstract_introduction_texts'))
   names = []
 
   for j_file in json_files:
     names.append(j_file)
-    write_file_to_tmp(os.path.join(file_dir, 'all_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'), j_file)
+    write_file_to_tmp(os.path.join(file_dir, 'abstract_introduction_texts', j_file), os.path.join(file_dir, 'gold_standard_keyphrases', j_file.split('.')[0] + '.keyphrases'), j_file)
 
   # make IO list file 
   print("Making list of files to tokenize...")

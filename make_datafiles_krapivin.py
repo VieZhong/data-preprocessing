@@ -25,7 +25,7 @@ SENTENCE_END = '</s>'
 tokenized_dir = "/data/krapivin/article_tokenized"
 finished_files_dir = "/data/krapivin/finished_files"
 chunks_dir = os.path.join(finished_files_dir, "chunked")
-TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
+# TAGGER_MODEL_PATH = "/project/stanford-postagger-full-2018-10-16/models/english-caseless-left3words-distsim.tagger"
 
 VOCAB_SIZE = 250000
 CHUNK_SIZE = 1000 # num examples per chunk, for the chunked data
@@ -253,14 +253,14 @@ def write_to_bin(stories, out_file, makevocab=False):
       vocab_counter.update(tokens)
 
   with open(out_file, 'wb') as writer:
-    tag_list = tag_article(article_list)
+    # tag_list = tag_article(article_list)
     for i in range(num_stories):
       if i % 100 == 0:
         print("Writing story %i of %i; %.2f percent done" % (i, num_stories, float(i) * 100.0 / float(num_stories)))
       # Write to tf.Example
       tf_example = example_pb2.Example()
       tf_example.features.feature['article'].bytes_list.value.extend([bytes(article_list[i], encoding="utf8")])
-      tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
+      # tf_example.features.feature['tags'].bytes_list.value.extend([bytes(tag_list[i], encoding="utf8")])
       tf_example.features.feature['keyword'].bytes_list.value.extend([bytes(keyword_list[i], encoding="utf8")])
       tf_example_str = tf_example.SerializeToString()
       str_len = len(tf_example_str)
@@ -286,7 +286,7 @@ def check_num_stories(stories_dir, num_expected):
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print("USAGE: python make_datafiles.py <cnn_stories_dir> <dailymail_stories_dir>")
+    print("USAGE: python make_datafiles.py <krapivin_dir>")
     sys.exit()
   jsons_dir = sys.argv[1]
   # dm_stories_dir = sys.argv[2]
@@ -305,9 +305,9 @@ if __name__ == '__main__':
   # tokenize_stories(dm_stories_dir, dm_tokenized_stories_dir)
 
   # Read the tokenized stories, do a little postprocessing then write to bin files
-  write_to_bin(stories[0: 400], os.path.join(finished_files_dir, "test.bin"))
-  write_to_bin(stories[0: 400], os.path.join(finished_files_dir, "val.bin"))
-  write_to_bin(stories[400:], os.path.join(finished_files_dir, "train.bin"), makevocab=True)
+  # write_to_bin(stories[0: 400], os.path.join(finished_files_dir, "test.bin"))
+  write_to_bin(stories, os.path.join(finished_files_dir, "val.bin"))
+  # write_to_bin(stories[400:], os.path.join(finished_files_dir, "train.bin"), makevocab=True)
 
   # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in finished_files/chunks
   chunk_all(finished_files_dir)

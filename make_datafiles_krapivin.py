@@ -51,12 +51,12 @@ def chunk_file(set_name, finished_files_dir):
       chunk += 1
 
 
-def chunk_all(finished_files_dir):
+def chunk_all(finished_files_dir, set_names):
   # Make a dir to hold the chunks
   if not os.path.isdir(chunks_dir):
     os.mkdir(chunks_dir)
   # Chunk the data
-  for set_name in ['train', 'val', 'test']:
+  for set_name in set_names:
     print("Splitting %s data into chunks..." % set_name)
     chunk_file(set_name, finished_files_dir)
   print("Saved chunked data in %s" % chunks_dir)
@@ -310,4 +310,4 @@ if __name__ == '__main__':
   # write_to_bin(stories[400:], os.path.join(finished_files_dir, "train.bin"), makevocab=True)
 
   # Chunk the data. This splits each of train.bin, val.bin and test.bin into smaller chunks, each containing e.g. 1000 examples, and saves them in finished_files/chunks
-  chunk_all(finished_files_dir)
+  chunk_all(finished_files_dir, ["val"])

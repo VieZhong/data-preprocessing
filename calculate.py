@@ -74,15 +74,15 @@ def score_eval(ref_dir, dec_dir, validation_data):
         
         article = val_reference[name]["article"]
         dec_words = read_text_file(os.path.join(dec_dir, dec_file))
-        present_dec_words, absent_dec_words = choose_present_and_absent_dec_words(dec_words, article)
+        present_dec_words, _ = choose_present_and_absent_dec_words(dec_words, article)
 
         if len(present_ref_words) > 0 and len(present_dec_words) > 0:
           f1_score_result_5.append(get_f1_score(present_ref_words, present_dec_words, stemmer, 5))
           f1_score_result_10.append(get_f1_score(present_ref_words, present_dec_words, stemmer, 10))
 
-        if len(absent_ref_words) > 0 and len(absent_dec_words) > 0:
-          absent_recall_result_10.append(get_absent_recall(absent_ref_words, absent_dec_words, stemmer, 10))
-          absent_recall_result_50.append(get_absent_recall(absent_ref_words, absent_dec_words, stemmer, 50))
+        if len(absent_ref_words) > 0 and len(dec_words) > 0:
+          absent_recall_result_10.append(get_absent_recall(absent_ref_words, dec_words, stemmer, 10))
+          absent_recall_result_50.append(get_absent_recall(absent_ref_words, dec_words, stemmer, 50))
   else:
     ref_files = os.listdir(ref_dir)
     val_reference = dict()
@@ -101,15 +101,15 @@ def score_eval(ref_dir, dec_dir, validation_data):
         }
 
         dec_words = read_text_file(os.path.join(dec_dir, dec_file))
-        present_dec_words, absent_dec_words = choose_present_and_absent_dec_words(dec_words, article)
+        present_dec_words, _ = choose_present_and_absent_dec_words(dec_words, article)
 
         if len(present_ref_words) > 0 and len(present_dec_words) > 0:
           f1_score_result_5.append(get_f1_score(present_ref_words, present_dec_words, stemmer, 5))
           f1_score_result_10.append(get_f1_score(present_ref_words, present_dec_words, stemmer, 10))
 
-        if len(absent_ref_words) > 0 and len(absent_dec_words) > 0:
-          absent_recall_result_10.append(get_absent_recall(absent_ref_words, absent_dec_words, stemmer, 10))
-          absent_recall_result_50.append(get_absent_recall(absent_ref_words, absent_dec_words, stemmer, 50))
+        if len(absent_ref_words) > 0 and len(dec_words) > 0:
+          absent_recall_result_10.append(get_absent_recall(absent_ref_words, dec_words, stemmer, 10))
+          absent_recall_result_50.append(get_absent_recall(absent_ref_words, dec_words, stemmer, 50))
     pickle.dump(val_reference, open(val_reference_pickle_path, 'wb'))
 
   return sum(f1_score_result_5) / len(f1_score_result_5), sum(f1_score_result_10) / len(f1_score_result_10), sum(absent_recall_result_10) / len(absent_recall_result_10), sum(absent_recall_result_50) / len(absent_recall_result_50)

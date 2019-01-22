@@ -141,14 +141,15 @@ def choose_present_and_absent_dec_words(keywords, article):
   present = []
   absent = []
   
-  title = article["title"]
-  abstract = article["abstract"]
+  if article is not None:
+    title = article["title"]
+    abstract = article["abstract"]
 
-  for x in keywords:
-    if x in title or x in abstract:
-      present.append(x)
-    else:
-      absent.append(x)
+    for x in keywords:
+      if x in title or x in abstract:
+        present.append(x)
+      else:
+        absent.append(x)
 
   return present, absent
 
